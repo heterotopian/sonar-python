@@ -178,6 +178,14 @@ public class PythonXUnitSensor extends PythonReportSensor {
       String candidateKey2 = StringUtils.replace(StringUtils.substringBeforeLast(fileKey, "."), ".", "/") + ".py";
       if ( !(candidateKey2.equals(candidateKey))) {
         unitTestFile = getSonarTestFile(new File(candidateKey2));
+
+        if (unitTestFile == null) {
+          // c) check assuming the key does not contain __init__.py
+          String candidateKey3 = StringUtils.replace(StringUtils.substringBeforeLast(fileKey, "."), ".", "/") + "/__init__.py";
+          if ( !(candidateKey3.equals(candidateKey)) && !(candidateKey3.equals(candidateKey2))) {
+            unitTestFile = getSonarTestFile(new File(candidateKey3));
+          }
+        }
       }
     }
 
