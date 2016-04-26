@@ -22,6 +22,7 @@ package org.sonar.plugins.python.xunit;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.Properties;
 import org.sonar.api.Property;
 import org.sonar.api.PropertyType;
@@ -33,6 +34,7 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.config.Settings;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Measure;
+import org.sonar.api.test.MutableTestPlan;
 import org.sonar.api.utils.ParsingUtils;
 import org.sonar.api.utils.StaxParser;
 import org.sonar.plugins.python.PythonReportSensor;
@@ -67,8 +69,11 @@ public class PythonXUnitSensor extends PythonReportSensor {
   public static final String SKIP_DETAILS = "sonar.python.xunit.skipDetails";
   private static final double PERCENT_BASE = 100d;
 
-  public PythonXUnitSensor(Settings conf, FileSystem fileSystem) {
+  private ResourcePerspectives perspectives;
+
+  public PythonXUnitSensor(Settings conf, FileSystem fileSystem, ResourcePerspectives perspectives) {
     super(conf, fileSystem);
+    this.perspectives = perspectives;
   }
 
   @DependsUpon
@@ -160,6 +165,22 @@ public class PythonXUnitSensor extends PythonReportSensor {
         context.saveMeasure(inputFile, CoreMetrics.TEST_SUCCESS_DENSITY, ParsingUtils.scaleValue(successDensity));
       }
       context.saveMeasure(inputFile, new Measure(CoreMetrics.TEST_DATA, fileReport.getDetails()));
+
+      saveResults(context, fileReport);
+    }
+  }
+
+  protected void saveResults(SensorContext context, TestSuite fileReport)  throws XMLStreamException {
+    for (TestCase unitTestResult : fileReport.getTestCases()) {
+      MutableTestPlan testPlan = perspectives.as(MutableTestPlan.class, fileReport.getInputFile());
+      if (testPlan != null) {
+        testPlan.addTestCase(unitTestResult.getName())
+                .setDurationInMs(Math.max(unitTestResult.getTime(), 0L))
+                .setStatus(org.sonar.api.test.TestCase.Status.of(unitTestResult.getStatus()))
+                .setMessage(unitTestResult.getErrorMessage())
+                .setType(org.sonar.api.test.TestCase.TYPE_UNIT)
+                .setStackTrace(unitTestResult.getStackTrace());
+      }
     }
   }
 

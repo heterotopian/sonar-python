@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sonar.api.batch.CoverageExtension;
 import org.sonar.api.batch.SensorContext;
+import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.config.Settings;
@@ -47,6 +48,7 @@ public class PythonXUnitSensorTest {
   SensorContext context;
   Project project;
   DefaultFileSystem fs;
+  ResourcePerspectives perspectives;
 
   @Before
   public void setUp() {
@@ -55,7 +57,8 @@ public class PythonXUnitSensorTest {
     fs = new DefaultFileSystem();
     fs.setBaseDir(new File("src/test/resources/org/sonar/plugins/python"));
     context = mock(SensorContext.class);
-    sensor = new PythonXUnitSensor(settings, fs);
+    perspectives = mock(ResourcePerspectives.class);
+    sensor = new PythonXUnitSensor(settings, fs, perspectives);
   }
 
   @Test
@@ -115,7 +118,7 @@ public class PythonXUnitSensorTest {
   @Test
   public void shouldReportNothingWhenNoReportFound() {
     settings.setProperty(PythonXUnitSensor.REPORT_PATH_KEY, "notexistingpath");
-    sensor = new PythonXUnitSensor(settings, fs);
+    sensor = new PythonXUnitSensor(settings, fs, perspectives);
     sensor.analyse(project, context);
 
     verifyNoMoreInteractions(context);
@@ -124,7 +127,7 @@ public class PythonXUnitSensorTest {
   @Test(expected = IllegalStateException.class)
   public void shouldThrowWhenGivenInvalidTime() {
     settings.setProperty(PythonXUnitSensor.REPORT_PATH_KEY, "xunit-reports/invalid-time-xunit-report.xml");
-    sensor = new PythonXUnitSensor(settings, fs);
+    sensor = new PythonXUnitSensor(settings, fs, perspectives);
     sensor.analyse(project, context);
   }
 }

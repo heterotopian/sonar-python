@@ -60,6 +60,22 @@ public class TestCase {
     this.status = status;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  public String getStackTrace() {
+    return stackTrace;
+  }
+
   /**
    * Returns true if this testcase is an error, false otherwise
    */
